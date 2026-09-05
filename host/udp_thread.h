@@ -39,6 +39,8 @@ signals:
     void signal_img_saved(const QString &path);
 
 private:
+    static constexpr int MAX_FRAMES = 96;   // 待显示帧上限，超出丢弃最旧（防积压）
+
     QUdpSocket *socket;
 
     QMutex _queueMutex;          // 保护 _frames / _saveFlag / _savePath / _saveResult

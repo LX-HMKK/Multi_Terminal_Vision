@@ -43,6 +43,9 @@ signals:
     void signal_msg();
 
 private:
+    static constexpr int MAX_RECV_BUF = 1 << 20;   // 接收缓冲上限 1 MiB（DoS 防护）
+    static constexpr int MAX_MSG = 200;            // 消息队列上限
+
     QMutex _queueMutex;             // 保护 _msgQueue / _recvBuf
     QQueue<QString> _msgQueue;
     QByteArray _recvBuf;            // 跨 recv 的换行分帧缓冲

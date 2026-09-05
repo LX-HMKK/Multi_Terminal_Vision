@@ -10,6 +10,7 @@
 #include <QListWidgetItem>
 #include <QColor>
 #include <QTableWidget>
+#include <QRegularExpression>
 
 Widget::~Widget()
 {
@@ -124,11 +125,17 @@ void Widget::print_tcp_msg()
         ui->label_msg->append("client: " + msg);
         ui->label_msg->setTextColor(QColor::fromRgb(0, 0, 0));
 
-        // 收到 ID_xx_start/end 事件 → 触发当前帧保存
-        if (msg.startsWith("ID")) {
-            QString current_time = QDateTime::currentDateTime().toString("MM-dd-hh-mm-ss");
-            QString file_name = msg + "_" + current_time + ".jpg";
-            QString file_path = ui->lineEdit_path->text().trimmed() + file_name;
+        // 收到 ID_<id>_start/end 事件 → 触发当前帧保存。
+        // 安全：只用数字还原文件名，防止事件串注入路径分割符/`..` 造成任意写文件。
+        static const QRegularExpression idRe(QStringLiteral("^ID_(\\d+)_(start|end)$"));
+        const QRegularExpressionMatch m = idRe.match(msg);
+        if (m.hasMatch()) {
+            const QString trackId = m.captured(1);          // 仅取数字 ID
+            const QString event = m.captured(2);            // start / end
+            const QString current_time = QDateTime::currentDateTime().toString("MM-dd-hh-mm-ss");
+            const QString dir = ui->lineEdit_path->text().trimmed();
+            const QString file_name = "ID_" + trackId + "_" + event + "_" + current_time + ".jpg";
+            const QString file_path = QDir::cleanPath(dir + file_name);
             qDebug() << "Generated file path:" << file_path;
             udp_thread->request_save(file_path);
         }

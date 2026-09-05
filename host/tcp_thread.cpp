@@ -37,6 +37,8 @@ void Tcp_Thread::run()
                 if (!msg.isEmpty()) {
                     _msgQueue.enqueue(msg);
                     any = true;
+                    while (_msgQueue.size() > MAX_MSG)   // 超限丢弃最旧
+                        _msgQueue.dequeue();
                 }
             }
         }
@@ -72,6 +74,12 @@ void Tcp_Thread::on_ready_read()
         return;
     QMutexLocker ql(&_queueMutex);
     _recvBuf += data;
+    // 安全：限制接收缓冲上限，防止恶意端塞爆内存（DoS）
+    if (_recvBuf.size() > MAX_RECV_BUF) {
+        _recvBuf.clear();
+        ql.unlock();
+        socket->abort();
+    }
 }
 
 void Tcp_Thread::on_disconnected()

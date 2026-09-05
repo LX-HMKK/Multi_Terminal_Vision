@@ -38,6 +38,9 @@ ACTION_THROTTLE = float(os.environ.get("ACTION_THROTTLE", "0.5"))            # �
 # ---- 帧来源 ----
 DEFAULT_SOURCE = os.environ.get("DEFAULT_SOURCE", "udp")    # udp | webcam | video | synthetic
 
+# ---- 可选鉴权：与部署端 NANO_TOKEN 保持一致才可下发指令（空 = 不鉴权）----
+NANO_TOKEN = os.environ.get("NANO_TOKEN", "")
+
 # ---- 日志 ----
 def setup_logging(name: str = "vision_server") -> logging.Logger:
     logger = logging.getLogger(name)

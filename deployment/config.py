@@ -21,6 +21,11 @@ NANO_IP = os.environ.get("NANO_IP", "192.168.87.102")
 SERVER_VIDEO_PORT = int(os.environ.get("SERVER_VIDEO_PORT", "5552"))
 NANO_CMD_PORT = int(os.environ.get("NANO_CMD_PORT", "12345"))
 
+# 指令服务绑定地址：默认 NANO_IP（仅暴露在该网卡），开发机未配置该 IP 时回退 0.0.0.0。
+COMMAND_BIND = os.environ.get("COMMAND_BIND", "")
+# 可选共享令牌：为空 = 不鉴权（仅限可信局域网）；设置后与运算端保持一致才可收到指令。
+SHARED_TOKEN = os.environ.get("NANO_TOKEN", "")
+
 # ---- 串口 ----
 SERIAL_PORT = os.environ.get("SERIAL_PORT", "/dev/ttyTHS1")
 BAUDRATE = 115200

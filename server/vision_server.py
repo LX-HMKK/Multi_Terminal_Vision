@@ -154,10 +154,12 @@ class TCPSender:
     - 可选 `recv_handler` 处理收到的完整行（例如上位机指令）；EOF 会 flush 尾部残留。
     """
 
-    def __init__(self, host: str, port: int, logger, name: str, recv_handler=None):
+    def __init__(self, host: str, port: int, logger, name: str,
+                 recv_handler=None, auth_line: str | None = None):
         self._host, self._port, self._name = host, port, name
         self._logger = logger
         self._recv_handler = recv_handler
+        self._auth_line = auth_line              # 连接成功后发送的鉴权行（可选）
         self._sock: socket.socket | None = None
         self._stop = False
         self._lock = threading.Lock()
@@ -196,6 +198,8 @@ class TCPSender:
         if old is not None:
             self._safe_close(old)
         self._logger.info("[%s] 连接成功 %s:%d", self._name, self._host, self._port)
+        if self._auth_line:
+            self.send(self._auth_line)          # 可选鉴权握手
         if self._recv_handler:
             threading.Thread(target=self._reader, args=(s,), daemon=True).start()
 
@@ -396,7 +400,8 @@ def run(args, logger) -> None:
         return
 
     # ---- 网络链路 ----
-    nano = TCPSender(config.NANO_IP, config.NANO_CMD_PORT, logger, "nano")
+    nano = TCPSender(config.NANO_IP, config.NANO_CMD_PORT, logger, "nano",
+                     auth_line=("AUTH " + config.NANO_TOKEN) if config.NANO_TOKEN else None)
     mode_holder = {"mode": config.MODE_AVOID}   # 默认避障模式
     handler = HostCommandHandler(mode_holder, nano, logger)
     host = TCPSender(config.QT_IP, config.HOST_CMD_TCP, logger, "host", recv_handler=handler)

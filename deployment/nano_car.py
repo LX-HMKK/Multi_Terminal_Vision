@@ -149,14 +149,22 @@ def command_server(state: SharedState, bridge, logger) -> None:
     """TCP 服务：接收运算端指令，更新共享状态。"""
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    # 绑定所有网卡，避免开发机未配置 NANO_IP 时绑定失败
+    # 默认绑定 NANO_IP（仅暴露在该网卡），开发机未配置时回退 0.0.0.0 并告警
+    bind_addr = config.COMMAND_BIND or config.NANO_IP
     try:
-        srv.bind(("0.0.0.0", config.NANO_CMD_PORT))
-        srv.listen(2)
+        srv.bind((bind_addr, config.NANO_CMD_PORT))
+        bound = bind_addr
     except OSError as exc:
-        logger.error("指令服务绑定 0.0.0.0:%d 失败: %s", config.NANO_CMD_PORT, exc)
-        return
-    logger.info("指令服务监听 0.0.0.0:%d（nano IP %s）", config.NANO_CMD_PORT, config.NANO_IP)
+        logger.warning("绑定 %s:%d 失败(%s)，回退到 0.0.0.0（仅建议用于开发机）",
+                       bind_addr, config.NANO_CMD_PORT, exc)
+        try:
+            srv.bind(("0.0.0.0", config.NANO_CMD_PORT))
+            bound = "0.0.0.0"
+        except OSError as exc2:
+            logger.error("指令服务绑定失败: %s", exc2)
+            return
+    srv.listen(2)
+    logger.info("指令服务监听 %s:%d", bound, config.NANO_CMD_PORT)
 
     try:
         while True:
@@ -176,6 +184,8 @@ def handle_client(state: SharedState, conn, addr, logger) -> None:
     """处理单个运算端连接。addr 来自 accept，避免对已关闭的 socket 调用 getpeername。"""
     conn.settimeout(1.0)
     buf = b""
+    authed = not config.SHARED_TOKEN            # 未设令牌时默认信任局域网
+    fail_count = 0
     try:
         while True:
             try:
@@ -185,13 +195,25 @@ def handle_client(state: SharedState, conn, addr, logger) -> None:
             if not chunk:
                 break
             buf += chunk
-            # 按行分帧：u0000 完整换行才算一条完整指令
+            # 按行分帧：完整换行才算一条完整指令
             while b"\n" in buf:
                 line, buf = buf.split(b"\n", 1)
-                if line.strip():
-                    apply_command(state, line.decode().strip(), logger)
-        # 连接关闭：处理残留的最后一条未换行指令
-        if buf.strip():
+                if not line.strip():
+                    continue
+                if not authed:
+                    # 鉴权握手：第一行必须是 "AUTH <token>"
+                    if line.strip().decode() == f"AUTH {config.SHARED_TOKEN}":
+                        authed = True
+                        logger.info("客户端鉴权成功: %s", addr)
+                    else:
+                        fail_count += 1
+                        if fail_count > 3:
+                            logger.warning("鉴权失败次数过多，断开: %s", addr)
+                            return
+                    continue
+                apply_command(state, line.decode().strip(), logger)
+        # 连接关闭：处理残留的最后一条未换行指令（仅已鉴权时）
+        if buf.strip() and authed:
             apply_command(state, buf.decode().strip(), logger)
     except OSError:
         pass

@@ -79,6 +79,8 @@ void Udp_Thread::on_udp_ready()
     if (pix.isNull())
         return;
     QMutexLocker ql(&_queueMutex);
+    while (_frames.size() >= MAX_FRAMES)   // 限流：丢弃最旧帧，防止积压
+        _frames.dequeue();
     _frames.enqueue(pix);
 }
 
