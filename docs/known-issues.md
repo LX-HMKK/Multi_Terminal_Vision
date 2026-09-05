@@ -25,8 +25,8 @@
 
 ## 已收敛（2026-09 结构与抽象清理）
 
-- **巨型类/单体收敛**：`host/widget.cpp` 的数据库 CRUD 抽到独立的 `MessageStore` 类（`host/message_store.*`），
-  `Widget` 只留 UI/网络/存图路由；`server/vision_server.py` 拆分帧源到 `server/sources.py`、网络链路到 `server/net.py`。
+- **巨型类/单体收敛**：`host/src/widget.cpp` 的数据库 CRUD 抽到独立的 `MessageStore` 类（`host/src/message_store.*`），
+  `Widget` 只留 UI/网络/存图路由；`server/vision_server.py` 拆分帧源到 `server/vision/sources.py`、网络链路到 `server/net/net.py`。
   入口与外部签名不变。
 - **删除死抽象**：`Widget::is_ui_visiable(bool)` 为纯占位（`(void)state`），已删除及其调用点；
   帧源中 `WebcamSource`/`VideoFileSource` 并成 `VideoCaptureSource`（重复消除）。

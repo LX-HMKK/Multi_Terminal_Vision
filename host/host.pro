@@ -12,20 +12,20 @@ TEMPLATE = app
 DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
-    main.cpp \
-    tcp_thread.cpp \
-    udp_thread.cpp \
-    widget.cpp \
-    message_store.cpp
+    src/main.cpp \
+    src/tcp_thread.cpp \
+    src/udp_thread.cpp \
+    src/widget.cpp \
+    src/message_store.cpp
 
 HEADERS += \
-    tcp_thread.h \
-    udp_thread.h \
-    widget.h \
-    message_store.h
+    src/tcp_thread.h \
+    src/udp_thread.h \
+    src/widget.h \
+    src/message_store.h
 
 FORMS += \
-    widget.ui
+    src/widget.ui
 
 # 如果你在 Windows 使用 mingw + OpenCV（本项目未用到），可在下面自行添加 include/lib。
 # INCLUDEPATH += path/to/opencv/include

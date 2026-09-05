@@ -17,7 +17,7 @@ sys.path.insert(0, str(REPO))
 
 
 def test_avoidance():
-    from server.avoidance import Detection, decide_action, pick_largest, ActionThrottle
+    from server.vision.avoidance import Detection, decide_action, pick_largest, ActionThrottle
     from server import config as scfg
 
     dets = [

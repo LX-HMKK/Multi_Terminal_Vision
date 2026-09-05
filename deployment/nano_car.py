@@ -26,8 +26,8 @@ import cv2
 
 from . import config
 from .config import setup_logging
-from .line_follow import LineFollower
-from .serial_bridge import make_serial_bridge
+from .vision.line_follow import LineFollower
+from .device.serial_bridge import make_serial_bridge
 
 
 @dataclass

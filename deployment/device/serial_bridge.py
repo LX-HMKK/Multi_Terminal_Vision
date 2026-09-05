@@ -13,7 +13,7 @@ from __future__ import annotations
 import logging
 from typing import Optional, Sequence
 
-from . import config
+from .. import config
 
 
 class SerialBridge:

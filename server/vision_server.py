@@ -32,9 +32,9 @@ import cv2
 
 from . import config
 from .config import setup_logging
-from .avoidance import Detection, pick_largest, decide_action, ActionThrottle
-from .sources import build_source
-from .net import TCPSender, UDPSender, TrackState, HostCommandHandler
+from .vision.avoidance import Detection, pick_largest, decide_action, ActionThrottle
+from .vision.sources import build_source
+from .net.net import TCPSender, UDPSender, TrackState, HostCommandHandler
 
 
 def load_model(logger):

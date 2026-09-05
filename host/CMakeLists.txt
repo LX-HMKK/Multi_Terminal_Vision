@@ -15,11 +15,11 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Sql Network)
 # Qt6 用 qt_add_executable；Qt5 用 add_executable（含 Q_OBJECT 需链接 Qt::moc 等，
 # 由自动 AUTOMOC 处理，Qt5 下 add_executable 即可）。
 set(HOST_SOURCES
-    main.cpp
-    widget.cpp
-    tcp_thread.cpp
-    udp_thread.cpp
-    message_store.cpp
+    src/main.cpp
+    src/widget.cpp
+    src/tcp_thread.cpp
+    src/udp_thread.cpp
+    src/message_store.cpp
 )
 
 if(QT_VERSION_MAJOR EQUAL 6)
