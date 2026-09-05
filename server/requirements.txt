@@ -1,0 +1,6 @@
+# 运算端（服务器）依赖
+# 安装: pip install -r requirements.txt
+# 有 NVIDIA 显卡可用 GPU，否则自动用 CPU（较慢）。CUDA 版 torch 见 ultralytics 文档。
+ultralytics>=8.0.0
+opencv-python>=4.5.0
+numpy>=1.19.5
