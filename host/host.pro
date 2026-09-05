@@ -22,7 +22,8 @@ HEADERS += \
     src/tcp_thread.h \
     src/udp_thread.h \
     src/widget.h \
-    src/message_store.h
+    src/message_store.h \
+    src/style.h
 
 FORMS += \
     src/widget.ui

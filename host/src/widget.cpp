@@ -1,6 +1,7 @@
 #include "widget.h"
 #include "ui_widget.h"
 #include "message_store.h"
+#include "style.h"
 #include <QDir>
 #include <QNetworkInterface>
 #include <QFileDialog>
@@ -38,6 +39,7 @@ Widget::Widget(QWidget *parent)
 {
     ui->setupUi(this);
     setWindowTitle("上位机（服务端）");
+    setStyleSheet(appStyleSheet());   // 统一浅色主题
 
     QString udp_port = "8888";   // 运算端回传视频
     QString tcp_port = "9999";   // 运算端指令/事件

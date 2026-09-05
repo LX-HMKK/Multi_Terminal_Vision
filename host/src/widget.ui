@@ -46,9 +46,6 @@
      <height>480</height>
     </size>
    </property>
-   <property name="styleSheet">
-    <string notr="true">background-color: rgb(255, 223, 199);</string>
-   </property>
    <property name="text">
     <string>frame...</string>
    </property>
@@ -209,9 +206,6 @@
      <width>251</width>
      <height>351</height>
     </rect>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">background-color: rgb(240, 240, 240);</string>
    </property>
    <property name="frameShape">
     <enum>QFrame::Shape::NoFrame</enum>
@@ -406,9 +400,6 @@
      <width>201</width>
      <height>281</height>
     </rect>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">background-color: rgb(240, 240, 240);</string>
    </property>
    <property name="frameShape">
     <enum>QFrame::Shape::NoFrame</enum>
