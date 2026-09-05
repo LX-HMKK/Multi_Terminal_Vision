@@ -24,6 +24,18 @@ qmake host.pro && make          # 或用 Qt Creator 打开 host.pro 构建
 启动后点击 **“开启监听”**（TCP `9999` / UDP `8888`）。前提：装了 Qt 5/6 的
 `core gui widgets network sql` 模块（**无需 OpenCV**）。
 
+**用 VS Code + CMake（可选）**：仓库自带 `host/CMakeLists.txt`（与 `host.pro` 等价），
+可在 VS Code 的 **Qt 扩展**（CMake 工作流）或命令行里构建。Windows 上一口气装
+Qt + 编译器的省事做法（MSYS2，在 **UCRT64** 终端执行）：
+```
+pacman -S --needed mingw-w64-ucrt-x86_64-qt6-base mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja
+```
+装好后在 VS Code 打开仓库、给 Qt 扩展选 **Qt6-MinGW** kit；或直接用命令行：
+```
+cd host
+cmake -S . -B build -G Ninja && cmake --build build
+```
+
 ### 2. 运算端（笔记本/PC）—— 缺 GPU 也能跑（CPU 慢一点）
 ```
 cd server
