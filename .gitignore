@@ -55,4 +55,5 @@ Thumbs.db
 .idea/
 *.swp
 .remember/           # 本地会话记忆（Claude Code 插件生成，非项目内容）
+.claude/             # 本地代理/编辑器配置（非项目代码）
 .accelerate/
