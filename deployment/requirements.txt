@@ -1,0 +1,6 @@
+# 部署端（Jetson Nano 车端）依赖
+# 安装: pip install -r requirements.txt
+# 注意: pyserial 仅在真实串口(SERIAL_PORT 非 mock)时才需要。
+opencv-python>=4.5.0
+numpy>=1.19.5
+pyserial>=3.5
