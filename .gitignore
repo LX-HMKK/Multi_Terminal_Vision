@@ -8,7 +8,10 @@ env/
 .ipynb_checkpoints/
 
 # ---- Qt / C++ ----
-build*/              # 构建产物目录
+# 构建产物目录
+build*/
+*.qmake.stash
+aqtinstall.log
 *.user
 *.pro.user
 *.pro.user.*
@@ -26,8 +29,10 @@ release/
 host/build*/
 
 # ---- 运行时生成 ----
-screenshots/          # 上位机截图保存目录（运行时生成）
-messages.db           # SQLite 数据库
+# 上位机截图保存目录（运行时生成）
+screenshots/
+# SQLite 数据库
+messages.db
 records*.log
 
 # ---- 模型 / 数据 ----
