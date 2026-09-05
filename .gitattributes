@@ -1,0 +1,5 @@
+# 文本文件统一 LF，避免 Windows 上反复 CRLF 改写
+* text=auto eol=lf
+*.bat eol=crlf
+*.cmd eol=crlf
+*.ps1 eol=crlf
