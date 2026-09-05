@@ -10,9 +10,6 @@
 #include <QNetworkInterface>
 #include <QHostAddress>
 #include <QDateTime>
-#include <QSqlDatabase>
-#include <QSqlQuery>
-#include <QSqlError>
 #include <QDebug>
 #include <QPixmap>
 #include <QFileDialog>
@@ -20,6 +17,8 @@
 
 #include "tcp_thread.h"
 #include "udp_thread.h"
+
+class MessageStore;
 
 namespace Ui {
 class Widget;
@@ -53,11 +52,9 @@ private:
     Ui::Widget *ui;
     Tcp_Thread *tcp_thread;
     Udp_Thread *udp_thread;
+    MessageStore *store;
 
-    void initDatabase();
-    void storeMessage(const QString &msg);
     void close_thread();
-    void is_ui_visiable(bool state);
     QHostAddress get_local_host_ip();
     void send_message(const QString &msg);
 };

@@ -23,6 +23,14 @@
 - **客户端断开未处理**：原 `socket_disconnect` 走旧式 `SIGNAL/SLOT` 字符串连接但未声明为槽，导致断开事件丢失；已改为
   旧式连接 + 真正的槽，或新式 `&QTcpSocket::disconnected` 连接。
 
+## 已收敛（2026-09 结构与抽象清理）
+
+- **巨型类/单体收敛**：`host/widget.cpp` 的数据库 CRUD 抽到独立的 `MessageStore` 类（`host/message_store.*`），
+  `Widget` 只留 UI/网络/存图路由；`server/vision_server.py` 拆分帧源到 `server/sources.py`、网络链路到 `server/net.py`。
+  入口与外部签名不变。
+- **删除死抽象**：`Widget::is_ui_visiable(bool)` 为纯占位（`(void)state`），已删除及其调用点；
+  帧源中 `WebcamSource`/`VideoFileSource` 并成 `VideoCaptureSource`（重复消除）。
+
 ## 仍待解决 / 需要你补全
 
 - **下位机固件协议**：串口控制字节（`[signal,0x43]`）的语义是按原 `All_IN.py` 反推的，
@@ -37,6 +45,9 @@
   未纳入本仓库；如需微调可在 ultralytics 上按 YOLO 格式重排。
 - **多车/多路**：当前为单 nano 单上位机；若要多路，需引入通道 ID 或对象前缀。
 - **安全性**：UDP/TCP 均无鉴权，仅适合局域网课程演示。
+- **上位机时间戳不一致**：`storeMessage` 写的是“北京时间”（UTC+8）字符串，而 `updateMessage`
+  用的是 `CURRENT_TIMESTAMP`（SQLite 的 UTC 时间）。这是原代码遗留，本次收敛刻意**保留原样**，
+  未属“顺手修复”；如需统一，可把 `updateMessage` 也改为写北京时间字符串。
 
 ## 安全说明（2026-09 加固）
 

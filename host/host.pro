@@ -15,12 +15,14 @@ SOURCES += \
     main.cpp \
     tcp_thread.cpp \
     udp_thread.cpp \
-    widget.cpp
+    widget.cpp \
+    message_store.cpp
 
 HEADERS += \
     tcp_thread.h \
     udp_thread.h \
-    widget.h
+    widget.h \
+    message_store.h
 
 FORMS += \
     widget.ui

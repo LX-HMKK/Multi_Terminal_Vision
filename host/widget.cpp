@@ -1,11 +1,9 @@
 #include "widget.h"
 #include "ui_widget.h"
+#include "message_store.h"
 #include <QDir>
 #include <QNetworkInterface>
 #include <QFileDialog>
-#include <QSqlDatabase>
-#include <QSqlQuery>
-#include <QSqlError>
 #include <QDebug>
 #include <QListWidgetItem>
 #include <QColor>
@@ -15,11 +13,7 @@
 Widget::~Widget()
 {
     delete ui;
-}
-
-void Widget::is_ui_visiable(bool state)
-{
-    (void)state; // 预留：控制 UI 使能（当前未使用）
+    delete store;
 }
 
 // 取本机局域网 IPv4，用于界面展示（绑定仍用 Any，见构造函数）
@@ -53,7 +47,7 @@ Widget::Widget(QWidget *parent)
     ui->line_ip_addr->setText(get_local_host_ip().toString());
     ui->line_udp_port->setText(udp_port);
     ui->line_tcp_port->setText(tcp_port);
-    is_ui_visiable(false);
+    store = new MessageStore();
 
     // 监听所有网卡，保证回环(127.0.0.1)与局域网都能连上
     QHostAddress local_ip = QHostAddress::Any;
@@ -73,7 +67,7 @@ Widget::Widget(QWidget *parent)
     udp_thread->stop();   // 等点击“开启监听”后再工作
     ui->label_msg->setText("等待客户端连接...");
 
-    initDatabase();
+    store->open();
 
     connect(ui->selectBtn,   &QPushButton::clicked, this, &Widget::on_selectBtn_clicked);
     connect(ui->deleteButton,&QPushButton::clicked, this, &Widget::on_deleteButton_clicked);
@@ -85,25 +79,6 @@ Widget::Widget(QWidget *parent)
     connect(ui->closeButton, &QPushButton::clicked, this, &Widget::on_closeButton_clicked);
     connect(ui->btn_send,    &QPushButton::clicked, this, &Widget::on_btn_send_clicked);
     connect(ui->btn_path_change, &QPushButton::clicked, this, &Widget::on_btn_path_change_clicked);
-}
-
-void Widget::initDatabase()
-{
-    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName("messages.db");
-    if (!db.open()) {
-        qDebug() << "Database open error:" << db.lastError().text();
-        return;
-    }
-    QSqlQuery query;
-    QString sql = "CREATE TABLE IF NOT EXISTS messages ("
-                  "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                  "message TEXT NOT NULL, "
-                  "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP);";
-    if (!query.exec(sql))
-        qDebug() << "Error creating table:" << query.lastError().text();
-    else
-        qDebug() << "Table created successfully!";
 }
 
 void Widget::display_udp_frame()
@@ -149,23 +124,6 @@ void Widget::print_tcp_msg()
     }
 }
 
-void Widget::storeMessage(const QString &path)
-{
-    QSqlDatabase db = QSqlDatabase::database();
-    QSqlQuery query;
-    // 北京时间(UTC+8)
-    QDateTime beijingTime = QDateTime::currentDateTimeUtc().addSecs(8 * 3600);
-    QString timestamp = beijingTime.toString("yyyy-MM-dd HH:mm:ss");
-
-    query.prepare("INSERT INTO messages (message, timestamp) VALUES (:message, :timestamp)");
-    query.bindValue(":message", path);
-    query.bindValue(":timestamp", timestamp);
-    if (!query.exec())
-        qDebug() << "Error inserting message:" << query.lastError().text();
-    else
-        qDebug() << "Message stored successfully!";
-}
-
 void Widget::close_thread()
 {
     tcp_thread->go_on();
@@ -188,7 +146,6 @@ void Widget::on_btn_open_clicked()
     if (ui->btn_open->text().toUtf8() == "开启监听") {
         if (tcp_thread->connect_flag) {
             ui->btn_open->setText("关闭监听");
-            is_ui_visiable(true);
             udp_thread->go_on();
             tcp_thread->go_on();
             udp_thread->recv_flag = true;
@@ -200,7 +157,6 @@ void Widget::on_btn_open_clicked()
         ui->btn_open->setText("开启监听");
         udp_thread->recv_flag = false;
         tcp_thread->recv_flag = false;
-        is_ui_visiable(false);
         udp_thread->stop();
         tcp_thread->stop();
         ui->label_msg->clear();
@@ -210,7 +166,7 @@ void Widget::on_btn_open_clicked()
 
 void Widget::on_img_saved(const QString &path)
 {
-    storeMessage(path);   // 记录保存的图片路径到数据库
+    store->storeMessage(path);   // 记录保存的图片路径到数据库
 }
 
 void Widget::on_btn_path_change_clicked()
@@ -224,21 +180,18 @@ void Widget::on_btn_path_change_clicked()
 
 void Widget::on_selectBtn_clicked()
 {
-    QSqlDatabase db = QSqlDatabase::database();
-    QSqlQuery query;
-    query.exec("SELECT id, message, timestamp FROM messages");
-
     ui->tableWidget->setColumnCount(3);
     ui->tableWidget->setHorizontalHeaderLabels({"ID", "Message", "Timestamp"});
     ui->tableWidget->setRowCount(0);
     ui->tableWidget->verticalHeader()->setVisible(false);
 
     int row = 0;
-    while (query.next()) {
+    const QList<QSqlRecord> rows = store->all();
+    for (const QSqlRecord &rec : rows) {
         ui->tableWidget->insertRow(row);
-        ui->tableWidget->setItem(row, 0, new QTableWidgetItem(query.value("id").toString()));
-        ui->tableWidget->setItem(row, 1, new QTableWidgetItem(query.value("message").toString()));
-        ui->tableWidget->setItem(row, 2, new QTableWidgetItem(query.value("timestamp").toString()));
+        ui->tableWidget->setItem(row, 0, new QTableWidgetItem(rec.value("id").toString()));
+        ui->tableWidget->setItem(row, 1, new QTableWidgetItem(rec.value("message").toString()));
+        ui->tableWidget->setItem(row, 2, new QTableWidgetItem(rec.value("timestamp").toString()));
         row++;
     }
 }
@@ -248,16 +201,10 @@ void Widget::on_deleteButton_clicked()
     QString id = ui->lineEdit1->text().trimmed();
     if (id.isEmpty()) { ui->label_msg->setText("ID is empty!"); return; }
 
-    QSqlDatabase db = QSqlDatabase::database();
-    QSqlQuery query;
-    query.prepare("DELETE FROM messages WHERE id = :id");
-    query.bindValue(":id", id.toInt());
-    if (!query.exec()) {
-        qDebug() << "Error deleting message:" << query.lastError().text();
-        ui->label_msg->setText("Error deleting message!");
-    } else {
+    if (store->removeById(id.toInt()))
         ui->label_msg->setText("Message deleted successfully!");
-    }
+    else
+        ui->label_msg->setText("Error deleting message!");
 }
 
 void Widget::on_addButton_clicked()
@@ -265,16 +212,10 @@ void Widget::on_addButton_clicked()
     QString message = ui->lineEdit2->text().trimmed();
     if (message.isEmpty()) { ui->label_msg->setText("Message is empty!"); return; }
 
-    QSqlDatabase db = QSqlDatabase::database();
-    QSqlQuery query;
-    query.prepare("INSERT INTO messages (message) VALUES (:message)");
-    query.bindValue(":message", message);
-    if (!query.exec()) {
-        qDebug() << "Error inserting message:" << query.lastError().text();
-        ui->label_msg->setText("Error inserting message!");
-    } else {
+    if (store->addMessage(message))
         ui->label_msg->setText("Message inserted successfully!");
-    }
+    else
+        ui->label_msg->setText("Error inserting message!");
     ui->lineEdit2->clear();
 }
 
@@ -287,17 +228,10 @@ void Widget::on_changeButton_clicked()
         return;
     }
 
-    QSqlDatabase db = QSqlDatabase::database();
-    QSqlQuery query;
-    query.prepare("UPDATE messages SET message = :message, timestamp = CURRENT_TIMESTAMP WHERE id = :id");
-    query.bindValue(":id", id.toInt());
-    query.bindValue(":message", message);
-    if (!query.exec()) {
-        qDebug() << "Error updating message:" << query.lastError().text();
-        ui->label_msg->setText("Error updating message!");
-    } else {
+    if (store->updateMessage(id.toInt(), message))
         ui->label_msg->setText("Message updated successfully!");
-    }
+    else
+        ui->label_msg->setText("Error updating message!");
     ui->lineEdit3->clear();
     ui->lineEdit4->clear();
 }
