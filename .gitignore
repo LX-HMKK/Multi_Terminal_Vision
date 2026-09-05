@@ -1,0 +1,58 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+
+# ---- Qt / C++ ----
+build*/              # 构建产物目录
+*.user
+*.pro.user
+*.pro.user.*
+*.o
+*.obj
+*.exe
+*.dll
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
+Makefile
+Makefile.*
+debug/
+release/
+host/build*/
+
+# ---- 运行时生成 ----
+screenshots/          # 上位机截图保存目录（运行时生成）
+messages.db           # SQLite 数据库
+records*.log
+
+# ---- 模型 / 数据 ----
+*.pt
+*.onnx
+*.safetensors
+*.weights
+*.bin
+*.pth
+data/
+dataset/
+
+# ---- 本仓库不纳入的大资产 ----（保留说明，勿提交）
+*.jpg
+*.jpeg
+*.png
+*.mp4
+*.avi
+MITdate/
+
+# ---- 系统 / 编辑器 ----
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+.remember/           # 本地会话记忆（Claude Code 插件生成，非项目内容）
+.accelerate/
