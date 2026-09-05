@@ -21,9 +21,12 @@ NANO_IP = os.environ.get("NANO_IP", "192.168.87.102")
 SERVER_VIDEO_PORT = int(os.environ.get("SERVER_VIDEO_PORT", "5552"))
 NANO_CMD_PORT = int(os.environ.get("NANO_CMD_PORT", "12345"))
 
-# 指令服务绑定地址：默认 NANO_IP（仅暴露在该网卡），开发机未配置该 IP 时回退 0.0.0.0。
+# 指令服务绑定地址：默认 NANO_IP（仅暴露在该网卡）。
+# 若该 IP 无法绑定（如开发机），默认“失败即关闭”，绝不静默回退到 0.0.0.0 暴露全网卡。
+# 仅当显式设 ALLOW_UNSAFE=1 时才回退到 0.0.0.0（会打印醒目告警）；开发建议设 COMMAND_BIND=127.0.0.1 回环。
 COMMAND_BIND = os.environ.get("COMMAND_BIND", "")
-# 可选共享令牌：为空 = 不鉴权（仅限可信局域网）；设置后与运算端保持一致才可收到指令。
+ALLOW_UNSAFE = os.environ.get("ALLOW_UNSAFE", "") == "1"   # 显式开关，才允许 0.0.0.0 暴露
+# 可选共享令牌：为空 = 不鉴权（默认信任局域网，启动会告警）；建议对外/生产两端设相同 NANO_TOKEN。
 SHARED_TOKEN = os.environ.get("NANO_TOKEN", "")
 
 # ---- 串口 ----

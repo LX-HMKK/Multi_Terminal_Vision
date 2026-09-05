@@ -16,6 +16,7 @@
 """
 from __future__ import annotations
 
+import hmac
 import socket
 import threading
 import time
@@ -149,22 +150,27 @@ def command_server(state: SharedState, bridge, logger) -> None:
     """TCP 服务：接收运算端指令，更新共享状态。"""
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    # 默认绑定 NANO_IP（仅暴露在该网卡），开发机未配置时回退 0.0.0.0 并告警
+    # ---- 接口 fail-closed：绝不静默回退到 0.0.0.0 ----
     bind_addr = config.COMMAND_BIND or config.NANO_IP
     try:
         srv.bind((bind_addr, config.NANO_CMD_PORT))
         bound = bind_addr
     except OSError as exc:
-        logger.warning("绑定 %s:%d 失败(%s)，回退到 0.0.0.0（仅建议用于开发机）",
-                       bind_addr, config.NANO_CMD_PORT, exc)
-        try:
+        if config.ALLOW_UNSAFE:
+            logger.warning("绑定 %s:%d 失败(%s)，因显式 ALLOW_UNSAFE=1 回退到 0.0.0.0！"
+                           "仅限开发机，切勿在生产暴露。", bind_addr, config.NANO_CMD_PORT, exc)
             srv.bind(("0.0.0.0", config.NANO_CMD_PORT))
             bound = "0.0.0.0"
-        except OSError as exc2:
-            logger.error("指令服务绑定失败: %s", exc2)
+        else:
+            logger.error("无法绑定 %s:%d（%s）。为安全起见指令服务已拒绝启动。\n"
+                         "   - 真机请确保 NANO_IP 为本机地址；开发联调请设 COMMAND_BIND=127.0.0.1（回环）\n"
+                         "   - 确要全网卡暴露可显式设 ALLOW_UNSAFE=1。",
+                         bind_addr, config.NANO_CMD_PORT, exc)
             return
     srv.listen(2)
     logger.info("指令服务监听 %s:%d", bound, config.NANO_CMD_PORT)
+    if not config.SHARED_TOKEN:
+        logger.warning("指令服务未启用鉴权（默认信任局域网）。对外/生产建议两端设相同 NANO_TOKEN。")
 
     try:
         while True:
@@ -201,8 +207,9 @@ def handle_client(state: SharedState, conn, addr, logger) -> None:
                 if not line.strip():
                     continue
                 if not authed:
-                    # 鉴权握手：第一行必须是 "AUTH <token>"
-                    if line.strip().decode() == f"AUTH {config.SHARED_TOKEN}":
+                    # 鉴权握手：第一行必须是 "AUTH <token>"，用恒定时间比较避免时序侧信道
+                    token = line.strip().decode().split(" ", 1)
+                    if len(token) == 2 and token[0] == "AUTH" and hmac.compare_digest(token[1], config.SHARED_TOKEN):
                         authed = True
                         logger.info("客户端鉴权成功: %s", addr)
                     else:
