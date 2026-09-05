@@ -57,6 +57,7 @@ private:
     void close_thread();
     QHostAddress get_local_host_ip();
     void send_message(const QString &msg);
+    void applyTheme(bool dark);
 };
 
 #endif // WIDGET_H

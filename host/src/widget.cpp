@@ -2,6 +2,8 @@
 #include "ui_widget.h"
 #include "message_store.h"
 #include "style.h"
+#include <QCheckBox>
+#include <QBoxLayout>
 #include <QDir>
 #include <QNetworkInterface>
 #include <QFileDialog>
@@ -15,6 +17,11 @@ Widget::~Widget()
 {
     delete ui;
     delete store;
+}
+
+void Widget::applyTheme(bool dark)
+{
+    setStyleSheet(dark ? darkStyleSheet() : lightStyleSheet());
 }
 
 // 取本机局域网 IPv4，用于界面展示（绑定仍用 Any，见构造函数）
@@ -39,7 +46,23 @@ Widget::Widget(QWidget *parent)
 {
     ui->setupUi(this);
     setWindowTitle("上位机（服务端）");
-    setStyleSheet(appStyleSheet());   // 统一浅色主题
+
+    // 主题：由“暗色主题”复选框切换；CAR_THEME=dark 环境变量可强制暗色（便于测试）。
+    connect(ui->theme_check, &QCheckBox::toggled, this, &Widget::applyTheme);
+    bool dark = ui->theme_check->isChecked();
+    if (qEnvironmentVariable("CAR_THEME") == "dark") {
+        ui->theme_check->setChecked(true);
+        dark = true;
+    }
+    applyTheme(dark);
+
+    // 左右列比例：左（视频+历史）更宽，右（控制台）紧凑固定宽。
+    // .ui 里 QHBoxLayout 的两列靠 stretch + 右列最小宽来分配，避免右列被压缩到 0。
+    if (QBoxLayout *lay = qobject_cast<QBoxLayout *>(layout())) {
+        lay->setStretch(0, 3);   // leftCol
+        lay->setStretch(1, 0);   // panel_right
+    }
+    ui->panel_right->setMinimumWidth(300);
 
     QString udp_port = "8888";   // 运算端回传视频
     QString tcp_port = "9999";   // 运算端指令/事件
