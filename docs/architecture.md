@@ -45,13 +45,14 @@
 - 串口抽象：`RealSerial`（pyserial，真机）与 `MockSerial`（仅日志，无硬件联调）。
 
 ### 运算端（`server/`，笔记本/PC，Python）
-- **帧源抽象**：`udp`（默认，来自 nano）/ `webcam` / `video` / `synthetic`。
+- **帧源抽象**：`server/sources.py`——`udp`（默认，来自 nano）/ `webcam` / `video` / `synthetic`，
+  统一接口 `FrameSource` + 工厂 `build_source`。
 - **检测与跟踪**：ultralytics YOLO（替代原 yolov5+SORT），一次性给出目标框 + 跟踪 ID。
 - **生命周期事件**：新目标 `ID_xx_start`、消失 `ID_xx_end` → TCP 发上位机。
 - **避障决策**：`avoidance.py` 纯函数——最大目标位置分区 + 面积阈值 → 左/中/右动作；
   `ActionThrottle` 做节流与“仅变化才发”，抑制抖动。
-- **网络链路**：`TCPSender`（自动重连，向 nano / 上位机）、`UDPSender`（回传上位机）、
-  `UdpVideoSource`（接收 nano）。未接线时自动重连并日志提示，不阻塞主循环。
+- **网络链路**：`server/net.py`——`TCPSender`（自动重连，向 nano / 上位机）、`UDPSender`（回传上位机）、
+  `TrackState`（目标生命周期）、`HostCommandHandler`（解析上位机指令并转发）。未接线时自动重连并日志提示，不阻塞主循环。
 
 ### 上位机（`host/`，Windows，Qt Widgets C++）
 - **视频显示**：`Udp_Thread` 收 `8888` → `QPixmap` 显示；模式由“开启监听”按钮控制。
