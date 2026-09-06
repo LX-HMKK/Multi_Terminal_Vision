@@ -178,12 +178,6 @@ python -m server.vision_server --source synthetic
 | 运算端 | Python · ultralytics(YOLO) · OpenCV · numpy · socket · threading |
 | 上位机 | C++ · Qt 6/5（Widgets / Network / SQL）· SQLite |
 
-## 📝 说明
-
-- 原有 `yolov5+SORT` 外部依赖、`备份/*` 历史版本、`吕哲的代码/*`（无关的共享单车示例）、
-  MIT 行人数据集（约 900+ 张）均未纳入本仓库，见 [docs/known-issues.md](docs/known-issues.md)。
-- 仓库名 / 命名已整洁化处理，行为与原意一致；串口控制字节语义以小车固件为准。
-
 ## 📄 License
 
 本项目基于 [MIT](LICENSE) 许可开源。版权归属见 [LICENSE](LICENSE)。
